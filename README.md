@@ -43,6 +43,16 @@ Both are built from this one image.
 | `CANVAS_DOMAIN` | The public hostname. Canvas builds every link from it. |
 | `CANVAS_LMS_ADMIN_EMAIL`, `CANVAS_LMS_ADMIN_PASSWORD` | The first site admin, created on the first boot only. |
 
+## LTI 1.3 signing keys (added in this fork)
+
+Canvas signs every LTI 1.3 launch with the keys in `store/canvas/lti-keys`. With no Consul it reads them from
+`config/dynamic_settings.yml`, which upstream does not ship, so without this addition `/api/lti/security/jwks` is empty
+and every LTI launch fails with an internal error at `/api/lti/authorize_redirect`.
+
+`config/dynamic_settings.yml` reads them from `CANVAS_LTI_KEYS_JSON`: one JSON object `{"past": JWK, "present": JWK,
+"future": JWK}` of private RSA JWKs (`kty`, `kid`, `n`, `e`, `d`, `p`, `q`, `dp`, `dq`, `qi`). Set it on **both** the
+`canvas` and `canvas-jobs` services. Unset, Canvas runs as before with LTI 1.3 launches unavailable.
+
 ## Optional variables
 
 | Variable | Default | Notes |

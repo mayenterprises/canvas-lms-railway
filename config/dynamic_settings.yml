@@ -1,0 +1,22 @@
+<%
+  # Canvas signs every LTI 1.3 launch with the keys in store/canvas/lti-keys, and with no Consul it reads them from this
+  # file. Without them /api/lti/security/jwks is empty and every LTI launch fails with an internal error.
+  #
+  # CANVAS_LTI_KEYS_JSON holds the private keys as one JSON object, {"past": JWK, "present": JWK, "future": JWK}, so no
+  # key is stored in the image. Canvas signs with "present" and also publishes the other two for rotation. Set it on
+  # both the canvas and canvas-jobs services.
+  require "json"
+  raw = ENV["CANVAS_LTI_KEYS_JSON"].to_s.strip
+  lti_keys = raw.empty? ? nil : JSON.parse(raw)
+%>
+<% if lti_keys %>
+production:
+  store:
+    canvas:
+      lti-keys:
+        jwk-past.json: <%= lti_keys.fetch("past").to_json.to_json %>
+        jwk-present.json: <%= lti_keys.fetch("present").to_json.to_json %>
+        jwk-future.json: <%= lti_keys.fetch("future").to_json.to_json %>
+<% else %>
+production: {}
+<% end %>
